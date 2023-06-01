@@ -1,16 +1,18 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
-import json
+from flask_marshmallow import Marshmallow
 
 app = Flask(__name__)
+
+app.config['JSON_SORT_KEYS'] = False
 
 app.config[
     "SQLALCHEMY_DATABASE_URI"
 ] = "postgresql+psycopg2://trello_dev:spameggs123@localhost:5432/trello"
 
 db = SQLAlchemy(app)
-
+ma = Marshmallow(app)
 
 class Card(db.Model):
     __tablename__ = "cards"
@@ -21,6 +23,10 @@ class Card(db.Model):
     status = db.Column(db.String(30))
     date_created = db.Column(db.Date())
 
+class CardSchema(ma.Schema):
+  class Meta:
+    fields = ('id', 'title', 'description', 'status')
+    ordered = True
 
 @app.cli.command("create")
 def create_db():
@@ -69,7 +75,7 @@ def all_cards():
   # select * from cards;
   stmt = db.select(Card).order_by(Card.status.desc())
   cards = db.session.scalars(stmt).all()
-  return json.dumps(cards)
+  return CardSchema(many=True).dump(cards)
 
 
 @app.route("/")
