@@ -27,7 +27,7 @@ class User(db.Model):
 
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ('name', 'email', 'is_admin')
+        fields = ('name', 'email', 'password', 'is_admin')
 
 
 class Card(db.Model):
@@ -103,14 +103,22 @@ def seed_db():
 
 @app.route('/register', methods=['POST'])
 def register():
+    # Parse, sanitize and validate the incoming JSON data
+    # via the schema
     user_info = UserSchema().load(request.json)
+    # Create a new User model instance with the schema data
     user = User(
-        email=user_info.email,
-        password=bcrypt.generate_password_hash(user_info.password).decode('utf8'),
-        name=user_info.name
+        email=user_info['email'],
+        password=bcrypt.generate_password_hash(user_info['password']).decode('utf-8'),
+        name=user_info['name']
     )
-    print(user)
-    return {}
+
+    # Add and commit the new user
+    db.session.add(user)
+    db.session.commit()
+
+    # Return the new user, excluding the password
+    return UserSchema(exclude=['password']).dump(user), 201
 
 
 @app.route('/cards')
