@@ -1,7 +1,8 @@
-from flask import Flask
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from datetime import date
 from flask_marshmallow import Marshmallow
+from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
 
@@ -13,6 +14,7 @@ app.config[
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
+bcrypt = Bcrypt(app)
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -54,13 +56,13 @@ def seed_db():
     users = [
         User(
             email='admin@spam.com',
-            password='spinynorman',
+            password=bcrypt.generate_password_hash('spinynorman').decode('utf-8'),
             is_admin=True
         ),
         User(
             name='John Cleese',
             email='cleese@spam.com',
-            password='tisbutascratch'
+            password=bcrypt.generate_password_hash('tisbutascratch').decode('utf-8')
         )
     ]
 
@@ -97,6 +99,18 @@ def seed_db():
     # Commit the transaction to the database
     db.session.commit()
     print("Models seeded")
+
+
+@app.route('/register', methods=['POST'])
+def register():
+    user_info = UserSchema().load(request.json)
+    user = User(
+        email=user_info.email,
+        password=bcrypt.generate_password_hash(user_info.password).decode('utf8'),
+        name=user_info.name
+    )
+    print(user)
+    return {}
 
 
 @app.route('/cards')
