@@ -125,6 +125,18 @@ def register():
         return {'error': 'Email address already in use'}, 409
 
 
+@app.route('/login', methods=['POST'])
+def login():
+    try:
+        stmt = db.select(User).filter_by(email=request.json['email'])
+        user = db.session.scalar(stmt)
+        if user and bcrypt.check_password_hash(user.password, request.json['password']):
+            return UserSchema(exclude=['password']).dump(user)
+        else:
+            return {'error': 'Invalid email address or password'}, 401
+    except KeyError:
+        return {'error': 'Email and password are required'}, 400
+
 @app.route('/cards')
 def all_cards():
   # select * from cards;
