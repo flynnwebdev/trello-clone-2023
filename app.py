@@ -6,6 +6,7 @@ from datetime import timedelta
 from os import environ
 from dotenv import load_dotenv
 from models.user import User, UserSchema
+from models.card import Card, CardSchema
 from init import db, ma, bcrypt, jwt
 
 load_dotenv()
@@ -15,7 +16,10 @@ app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = environ.get('JWT_KEY') 
 app.config['SQLALCHEMY_DATABASE_URI'] = environ.get('DB_URI')
 
-
+db.init_app(app)
+ma.init_app(app)
+jwt.init_app(app)
+bcrypt.init_app(app)
 
 def admin_required():
   user_email = get_jwt_identity()
@@ -28,23 +32,6 @@ def admin_required():
 def unauthorized(err):
     return {'error': 'You must be an admin'}, 401
 
-
-
-
-
-class Card(db.Model):
-    __tablename__ = "cards"
-
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100))
-    description = db.Column(db.Text())
-    status = db.Column(db.String(30))
-    date_created = db.Column(db.Date())
-
-class CardSchema(ma.Schema):
-  class Meta:
-    fields = ('id', 'title', 'description', 'status')
-    ordered = True
 
 @app.cli.command("create")
 def create_db():
