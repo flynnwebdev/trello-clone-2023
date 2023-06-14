@@ -38,7 +38,8 @@ def create_card():
     title = card_info['title'],
     description = card_info['description'],
     status = card_info['status'],
-    date_created = date.today()
+    date_created = date.today(),
+    user_id = card_info['user_id']
   )
   # Add and commit the new card to the session
   db.session.add(card)
