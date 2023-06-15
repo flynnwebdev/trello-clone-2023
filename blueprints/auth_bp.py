@@ -44,7 +44,7 @@ def login():
         user = db.session.scalar(stmt)
         if user and bcrypt.check_password_hash(user.password, request.json['password']):
             token = create_access_token(identity=user.id, expires_delta=timedelta(days=1))
-            return {'token': token, 'user': UserSchema(exclude=['password', 'cards']).dump(user)}
+            return {'token': token, 'user': UserSchema(exclude=['password', 'cards', 'comments']).dump(user)}
         else:
             return {'error': 'Invalid email address or password'}, 401
     except KeyError:
@@ -56,7 +56,7 @@ def admin_required():
   stmt = db.select(User).filter_by(id=user_id)
   user = db.session.scalar(stmt)
   if not (user and user.is_admin):
-    abort(401)
+    abort(401, description="You must be an admin")
 
 
 def admin_or_owner_required(owner_id):
@@ -64,4 +64,4 @@ def admin_or_owner_required(owner_id):
   stmt = db.select(User).filter_by(id=user_id)
   user = db.session.scalar(stmt)
   if not (user and (user.is_admin or user_id == owner_id)):
-    abort(401)
+    abort(401, description='You must be an admin or the owner')
